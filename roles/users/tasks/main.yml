@@ -11,6 +11,5 @@
     - name: set up authorized keys for the labuser user
       authorized_key: user=labuser key="{{item}}"
       with_file:
-        - ~/.ssh/id_ecdsa.pub
-      become: yes
+        - /home/labuser/.ssh/id_ecdsa.pub
       
