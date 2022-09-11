@@ -1,7 +1,6 @@
 ---
 - name: User configurations
   hosts: all
-  becomes: yes
   roles:
     - users
 
