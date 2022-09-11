@@ -1,6 +1,7 @@
 ---
 # tasks file for roles/install-k8s
 
+    block:
      - name: Create containerd config file
        file:
          path: "/etc/modules-load.d/containerd.conf"
