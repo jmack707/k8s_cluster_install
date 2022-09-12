@@ -8,16 +8,10 @@
         name: common
 
     - name: Master Configurations
-      become: yes
-      become_method: sudo
-      become_user: root    
       include_role: 
         name: master-node
 
     - name: Node Join
-      become: yes
-      become_method: sudo
-      become_user: root     
       include_role:
         name: worker
 
