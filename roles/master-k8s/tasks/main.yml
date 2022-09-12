@@ -3,9 +3,6 @@
 
     - name: initialize the cluster
       shell: kubeadm init 
-      args:
-        chdir: $HOME
-        creates: cluster_initialized.txt
       become: true
       delegate_to: master
 
@@ -54,8 +51,8 @@
     - name: Bash Completion and Shortcuts
       ansible.builtin.shell: "{{ item }}"
       with_items: 
-        - echo 'source <(kubectl completion bash)' >>/home/vagrant/.bashrc
-        - echo 'alias k=kubectl' >>/home/vagrant/.bashrc
-        - echo 'complete -o default -F __start_kubectl k' >>/home/vagrant/.bashrc
+        - echo 'source <(kubectl completion bash)' >>/home/labuser/.bashrc
+        - echo 'alias k=kubectl' >>/home/labuser/.bashrc
+        - echo 'complete -o default -F __start_kubectl k' >>/home/labuser/.bashrc
       args:
         executable: /bin/bash
