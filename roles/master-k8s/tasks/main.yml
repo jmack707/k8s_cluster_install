@@ -17,6 +17,7 @@
         mode: 0755
 
     - name: copies admin.conf to user's kube config
+      become: yes
       copy:
         src: /etc/kubernetes/admin.conf
         dest: /home/labuser/.kube/config
