@@ -29,7 +29,6 @@
       shell: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
       args:
         chdir: $HOME
-      become: yes
         
     - name: Get the token for joining the worker nodes
       become: yes
