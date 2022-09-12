@@ -1,5 +1,6 @@
 ---
 # tasks file for roles/join-workers
 
-   - debug:
-      msg: "{{ kubernetes_join_command.stdout }}"
+- name: Run join node script
+  ansible.builtin.script:
+    cmd: "/tmp/kubernetes_join_command.sh"
