@@ -3,5 +3,5 @@
 
    - name: Join the Worker nodes to the cluster.
      become: yes
-     shell: "{{ hostvars['master']['join_command'] }}"
+     shell: "{{ hostvars['master']['kubernetes_join_command'] }}"
      register: joined_or_not
