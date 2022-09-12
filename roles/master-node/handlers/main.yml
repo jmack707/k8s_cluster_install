@@ -1,4 +1,0 @@
----
-# handlers file for roles/master-node
-- name: docker status
-  service: name=docker state=started

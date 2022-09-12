@@ -1,4 +1,0 @@
----
-# vars file for roles/master-node
-pod_cidr: 10.244.0.0/16
-node_ip: 172.16.20.30

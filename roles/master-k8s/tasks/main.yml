@@ -49,3 +49,12 @@
       become_user: labuser
       delegate_to: "{{ item }}"
       loop: "{{ groups['workers'] }}"
+
+    - name: Bash Completion and Shortcuts
+      ansible.builtin.shell: "{{ item }}"
+      with_items: 
+        - echo 'source <(kubectl completion bash)' >>/home/vagrant/.bashrc
+        - echo 'alias k=kubectl' >>/home/vagrant/.bashrc
+        - echo 'complete -o default -F __start_kubectl k' >>/home/vagrant/.bashrc
+      args:
+        executable: /bin/bash
