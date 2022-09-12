@@ -2,11 +2,10 @@
 # tasks file for roles/master-k8
 
     - name: initialize the cluster
-      shell: kubeadm init --config kubeadm.conf
+      command: kubeadm init --config kubeadm.conf
       args:
         chdir: $HOME      
       become: true
-      connection: local
 
     - name: create .labuser directory
       become: true
