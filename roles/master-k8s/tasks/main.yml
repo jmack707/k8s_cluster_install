@@ -2,7 +2,7 @@
 # tasks file for roles/master-k8
 
     - name: initialize the cluster
-      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock
+      shell: kubeadm init --config files/kubeadm.conf
       args:
         chdir: $HOME
         creates: cluster_initialized.txt
