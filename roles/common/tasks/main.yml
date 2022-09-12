@@ -1,17 +1,16 @@
 ---
 # tasks file for roles/common
 - name: Install packages that allow apt to be used over HTTPS
-  ansible.builtin.package:
+  ansible.builtin.apt:
     state: present
-    use: apt
-    name:
+    pkg:
       - apt-transport-https
       - ca-certificates
       - curl
       - gnupg-agent
       - software-properties-common
   become: true
-  delegate_to: all
+  delegate_to: master
 
 - name: Add an apt signing key for Docker
   apt_key:
