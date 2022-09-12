@@ -3,6 +3,8 @@
 
     - name: initialize the cluster
       shell: kubeadm init --config kubeadm.conf
+      args:
+        chdir: $HOME      
       become: true
 
     - name: create .labuser directory
