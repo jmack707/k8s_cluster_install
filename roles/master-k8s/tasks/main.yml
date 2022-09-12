@@ -2,7 +2,10 @@
 # tasks file for roles/master-k8
 
     - name: initialize the cluster
-      shell: "kubeadm init --config {{ lookup('file', 'files/kubeadm.yaml') | from_yaml_all }}"
+      shell: kubeadm init 
+      args:
+        chdir: $HOME
+        creates: cluster_initialized.txt
       become: true
       delegate_to: master
 
