@@ -3,6 +3,7 @@
 - name: Install packages that allow apt to be used over HTTPS
   ansible.builtin.package:
     state: present
+    use: apt
     name:
       - apt-transport-https
       - ca-certificates
@@ -23,6 +24,8 @@
 
 - name: Install docker and its dependecies
   ansible.builtin.package:
+    state: present
+    use: apt
     name:
       - docker-ce
       - docker-ce-cli
