@@ -1,7 +1,7 @@
 ---
 # tasks file for roles/common
 - name: Install packages that allow apt to be used over HTTPS
-  apt:
+  ansible.builtin.apt:
     state: present
     update_cache: yes
     pkg:
