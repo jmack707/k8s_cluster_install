@@ -4,4 +4,4 @@
 - name: Run join node script
   ansible.builtin.script:
      cmd: "/tmp/kubernetes_join_command.sh"
-  delegate_to: workers
+  delegate_to: "{{ groups['workers'] }}"
