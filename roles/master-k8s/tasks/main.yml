@@ -10,7 +10,7 @@
       loop: "{{ groups['workers'] }}"
 
     - name: initialize the cluster
-      shell: kubeadm init --config "/tmp.kubeadm.conf"
+      shell: kubeadm init --config /tmp.kubeadm.conf
       become: true
 
     - name: create .labuser directory
