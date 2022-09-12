@@ -6,3 +6,4 @@
      cmd: "/tmp/kubernetes_join_command.sh"
   delegate_to: "{{ item }}"
   loop: "{{ groups['workers'] }}"
+  become: true
