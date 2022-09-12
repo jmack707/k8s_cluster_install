@@ -10,7 +10,7 @@
     - install-k8s
 
 - name: Configure Master
-  hosts: Master
+  hosts: master
   roles:
     - master-k8s
 
