@@ -3,9 +3,6 @@
 
     - name: initialize the cluster
       shell: kubeadm init --config https://raw.githubusercontent.com/jmack707/k8s_cluster_install/master/roles/master-k8s/files/kubeadm.yaml
-      args:
-        chdir: $HOME
-        creates: cluster_initialized.txt
       become: true
       delegate_to: master
 
