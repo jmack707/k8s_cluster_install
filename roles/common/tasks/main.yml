@@ -9,6 +9,7 @@
       - curl
       - gnupg-agent
       - software-properties-common
+  become: true
 
 - name: Add an apt signing key for Docker
   apt_key:
@@ -26,6 +27,7 @@
       - docker-ce
       - docker-ce-cli
       - containerd.io
+  become: true    
   notify:
     - docker status
 
