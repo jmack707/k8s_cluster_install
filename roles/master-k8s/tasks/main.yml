@@ -47,4 +47,4 @@
         mode: "0777"
       become: true
       become_user: labuser
-      delegate_to: worker
+      delegate_to: workers
