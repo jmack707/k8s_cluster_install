@@ -2,7 +2,7 @@
 # tasks file for roles/master-k8
 
     - name: initialize the cluster
-      shell: kubeadm init --config /files/kubeadm.conf
+      shell: kubeadm init --config kubeadm.conf
       become: true
       delegate_to: master
 
