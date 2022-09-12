@@ -9,4 +9,4 @@
       become: true
 
     - name: set up authorized keys for the labuser user
-      authorized_key: user=labuser key={{lookup('ansible.builtin.file', 'files/id_ecdsa.pub') | from_yaml_all}}
+      authorized_key: user=labuser key={{lookup('ansible.builtin.file', 'files/id_ecdsa.pub') }}
