@@ -6,6 +6,7 @@
       args:
         chdir: $HOME      
       become: true
+      connection: local
 
     - name: create .labuser directory
       become: true
