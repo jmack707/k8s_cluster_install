@@ -2,7 +2,7 @@
 # tasks file for roles/master-k8
 
     - name: initialize the cluster
-      command: "kubeadm init --config {{ lookup('file', 'files/kubeadm.conf') | from_yaml_all }} "
+      command: kubeadm init --config "{{ lookup('file', 'files/kubeadm.conf') | from_yaml_all }} "
       become: true
 
     - name: create .labuser directory
