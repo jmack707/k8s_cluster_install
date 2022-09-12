@@ -2,11 +2,9 @@
 # tasks file for roles/common
 - name: Install packages that allow apt to be used over HTTPS
   apt:
-    name: "{{ packages }}"
     state: present
     update_cache: yes
-  vars:
-    packages:
+    pkg:
       - apt-transport-https
       - ca-certificates
       - curl
