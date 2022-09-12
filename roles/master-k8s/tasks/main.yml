@@ -1,8 +1,15 @@
 ---
 # tasks file for roles/master-k8
 
+    - name: Copy kubeadm.conf
+      copy: 
+        src: "{{ kubernetes_join_command.stdout_lines[0] }}" 
+        dest: "/tmp/kubeadm.conf"
+        mode: "0777"
+      delegate_to: master
+
     - name: initialize the cluster
-      shell: kubeadm init --config "{{ lookup('file', 'files/kubeadm.conf') | from_yaml_all }} "
+      shell: kubeadm init --config /tmp.kubeadm.conf
       become: true
 
     - name: create .labuser directory
