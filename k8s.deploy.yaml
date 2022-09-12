@@ -6,7 +6,6 @@
     - name: Deploy Common Configurations
       include_role:
         name: common
-      delegate_to: master
 
     - name: Master Configurations
       become: yes
@@ -14,7 +13,6 @@
       become_user: root    
       include_role: 
         name: master-node
-      delelgate_to: master
 
     - name: Node Join
       become: yes
@@ -22,7 +20,6 @@
       become_user: root     
       include_role:
         name: worker
-      delegate_to: workers
 
     
 
