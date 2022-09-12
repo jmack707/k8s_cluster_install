@@ -9,7 +9,7 @@
       delegate_to: master
 
     - name: initialize the cluster
-      shell: kubeadm init --config /tmp/kubeadm.conf
+      shell: kubeadm init --pod-network-cidr= 10.244.0.0/16 service-account-issuer= api service-account-api-audiences= api service-account-signing-key-file= /etc/kubernetes/pki/sa.key
       become: true
 
     - name: create .labuser directory
