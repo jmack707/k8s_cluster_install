@@ -47,4 +47,5 @@
         mode: "0777"
       become: true
       become_user: labuser
-      delegate_to: workers
+      delegate_to: "{{ item }}"
+      loop: "{{ groups['workers'] }}"
