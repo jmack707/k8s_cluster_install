@@ -1,6 +1,9 @@
 ---
 # tasks file for roles/join-workers
 
+   - debug:
+      msg: "{{ kubernetes_join_command.stdout }}"
+
    - name: Join the Worker nodes to the cluster.
      become: yes
      shell: "{{ hostvars['master']['kubernetes_join_command'] }}"
