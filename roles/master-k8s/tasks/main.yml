@@ -39,7 +39,7 @@
     - name: customize calico Pod network
       become: true
       become_user: labuser
-      shell: kubectl create -f "{{ lookup('template', 'files/custom-resource.yaml') | from_yaml_all }}"      
+      shell: kubectl create -f "{{ lookup('template', 'files/custom-resources.yaml') | from_yaml_all }}"      
         
     - name: Get the token for joining the worker nodes
       become: true
