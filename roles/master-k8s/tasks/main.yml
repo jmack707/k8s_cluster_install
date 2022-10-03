@@ -32,9 +32,14 @@
     - name: install Pod network
       become: true
       become_user: labuser
-      shell: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
+      shell: kubectl apply -f kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/tigera-operator.yaml
       args:
         chdir: $HOME
+
+    - name: customize calico Pod network
+      become: true
+      become_user: labuser
+      shell: kubectl apply -f "{{ lookup('template', 'files/custom-resource.yaml') | from_yaml_all }}"      
         
     - name: Get the token for joining the worker nodes
       become: true
