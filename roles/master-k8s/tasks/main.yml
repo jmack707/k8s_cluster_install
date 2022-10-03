@@ -32,7 +32,7 @@
     - name: install Pod network
       become: true
       become_user: labuser
-      shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/tigera-operator.yaml
+      shell: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/tigera-operator.yaml
       args:
         chdir: $HOME
 
