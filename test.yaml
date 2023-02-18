@@ -1,28 +1,26 @@
 ---
-- name: Deploy Kubernetes
+- name: Deploy Kubernetes cluster
   hosts: all
   become: true
-  
+
+  vars:
+    kube_master: "{{ groups['kubernetes-master'] | default([]) }}"
+    kube_workers: "{{ groups['kubernetes-workers'] | default([]) }}"
+    kube_sysctl:
+      net.bridge.bridge-nf-call-ip6tables: 1
+      net.bridge.bridge-nf-call-iptables: 1
+
   tasks:
-    - name: Install Docker
-      apt:
-        name: docker
+    - name: Add Kubernetes repository key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
         state: present
-      
-    - name: Start Docker service
-      service:
-        name: docker
-        state: started
-      
+
     - name: Add Kubernetes repository
       apt_repository:
-        name: kubernetes
-        description: Kubernetes repository
-        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
-        gpgcheck: yes
-        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-        enabled: yes
-      
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
     - name: Install Kubernetes components
       apt:
         name:
@@ -30,24 +28,38 @@
           - kubeadm
           - kubectl
         state: present
-      
+
+    - name: Disable swap
+      command: swapoff -a
+      register: swap_status
+      changed_when: swap_status.rc == 0
+      when: ansible_swaptotal_mb > 0
+
+    - name: Update sysctl settings for Kubernetes
+      sysctl:
+        name: "{{ item }}"
+        value: "{{ kube_sysctl[item] }}"
+        state: present
+        reload: yes
+      loop: "{{ kube_sysctl.keys() }}"
+
     - name: Initialize Kubernetes master
-      command: kubeadm init --apiserver-advertise-address={{ inventory_hostname }} --pod-network-cidr=192.168.0.0/16
+      command: kubeadm init --apiserver-advertise-address={{ ansible_default_ipv4.address }} --pod-network-cidr=10.244.0.0/16
       register: kubeadm_output
-      when: inventory_hostname == groups['kubernetes-master'][0]
-      
+      when: inventory_hostname == kube_master[0]
+
     - name: Configure kubectl for non-root user
       copy:
         content: "{{ kubeadm_output.stdout_lines | select('search', 'kubeadm join') | list | join('\n') }}"
         dest: /home/{{ ansible_user }}/.kube/config
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
-      
-    - name: Join Kubernetes workers to the cluster
-      command: "{{ item }}"
-      loop:
-        - kubeadm join {{ hostvars['kubernetes-master']['ansible_default_ipv4']['address'] }}:6443 --token {{ kubeadm_output.stdout_lines | select('search', 'kubeadm join') | list | regex_replace('(^.*--token |\s.*$)', '') }} --discovery-token-ca-cert-hash {{ kubeadm_output.stdout_lines | select('search', 'kubeadm join') | list | regex_replace('(^.*--discovery-token-ca-cert-hash |\s.*$)', '') }}
-      when: inventory_hostname in groups['kubernetes-workers']
-      
-    - name: Install pod network add-on
+
+    - name: Install Calico pod network add-on
       command: kubectl apply -f https://docs.projectcalico.org/v3.16/manifests/calico.yaml
+      when: inventory_hostname == kube_master[0]
+
+    - name: Join Kubernetes workers to the cluster
+      command: "{{ hostvars[item]['kubeadm_join_cmd'] }}"
+      loop: "{{ kube_workers }}"
+      when: inventory_hostname == kube_master[0]
