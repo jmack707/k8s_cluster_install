@@ -1,0 +1,53 @@
+---
+- name: Deploy Kubernetes
+  hosts: all
+  become: true
+  
+  tasks:
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+      
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+      
+    - name: Add Kubernetes repository
+      yum_repository:
+        name: kubernetes
+        description: Kubernetes repository
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        enabled: yes
+      
+    - name: Install Kubernetes components
+      yum:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+      
+    - name: Initialize Kubernetes master
+      command: kubeadm init --apiserver-advertise-address={{ inventory_hostname }} --pod-network-cidr=192.168.0.0/16
+      register: kubeadm_output
+      when: inventory_hostname == groups['kubernetes-master'][0]
+      
+    - name: Configure kubectl for non-root user
+      copy:
+        content: "{{ kubeadm_output.stdout_lines | select('search', 'kubeadm join') | list | join('\n') }}"
+        dest: /home/{{ ansible_user }}/.kube/config
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      
+    - name: Join Kubernetes workers to the cluster
+      command: "{{ item }}"
+      loop:
+        - kubeadm join {{ hostvars['kubernetes-master']['ansible_default_ipv4']['address'] }}:6443 --token {{ kubeadm_output.stdout_lines | select('search', 'kubeadm join') | list | regex_replace('(^.*--token |\s.*$)', '') }} --discovery-token-ca-cert-hash {{ kubeadm_output.stdout_lines | select('search', 'kubeadm join') | list | regex_replace('(^.*--discovery-token-ca-cert-hash |\s.*$)', '') }}
+      when: inventory_hostname in groups['kubernetes-workers']
+      
+    - name: Install pod network add-on
+      command: kubectl apply -f https://docs.projectcalico.org/v3.16/manifests/calico.yaml
