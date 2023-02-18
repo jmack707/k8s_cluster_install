@@ -38,6 +38,7 @@
       become: true
       tags:
         - docker
+
     - name: Add Kubernetes APT repository
       apt_repository:
         repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
