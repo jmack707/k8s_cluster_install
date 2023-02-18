@@ -3,8 +3,8 @@
   hosts: all
   become: true
   vars:
-    k8s_version: "1.22.0-00"
-    pod_cidr: "192.168.0.0/16"
+    k8s_version: "1.25.0-00"
+    pod_cidr: "10.244.0.0/16"
   tasks:
     - name: Update apt cache
       apt:
