@@ -5,7 +5,7 @@
   
   tasks:
     - name: Install Docker
-      yum:
+      apt:
         name: docker
         state: present
       
@@ -15,7 +15,7 @@
         state: started
       
     - name: Add Kubernetes repository
-      yum_repository:
+      apt_repository:
         name: kubernetes
         description: Kubernetes repository
         baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
@@ -24,7 +24,7 @@
         enabled: yes
       
     - name: Install Kubernetes components
-      yum:
+      apt:
         name:
           - kubelet
           - kubeadm
