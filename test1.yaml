@@ -2,97 +2,54 @@
 - name: Install Kubernetes cluster
   hosts: all
   become: true
-  vars:
-    k8s_version: "1.25.0-00"
-    pod_cidr: "10.244.0.0/16"
+
   tasks:
-    - name: Update apt cache
-      apt:
-        update_cache: yes
+  - name: Update apt cache
+    apt: update_cache=yes
 
-    - name: Install Docker
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg-agent
-          - software-properties-common
-        state: present
-      become: true
-      tags:
-        - docker
+  - name: Install required packages
+    apt: name={{ item }} state=present
+    with_items:
+      - docker.io
+      - apt-transport-https
+      - curl
 
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-      become: true
-      tags:
-        - docker
+  - name: Add Kubernetes apt key
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
 
-    - name: Add Docker repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
-        state: present
-      become: true
-      tags:
-        - docker
+  - name: Add Kubernetes apt repository
+    apt_repository:
+      repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+      state: present
 
-    - name: Add Kubernetes APT key
-      apt_key:
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-        state: present
+  - name: Install Kubernetes packages
+    apt: name={{ item }} state=present
+    with_items:
+      - kubelet
+      - kubeadm
+      - kubectl
 
-    - name: Add Kubernetes APT repository
-      apt_repository:
-        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-        state: present
-        filename: kubernetes.list
-        update_cache: yes
-        
-    - name: Install Kubernetes packages
-      apt:
-        name:
-          - kubelet={{ k8s_version }}
-          - kubeadm={{ k8s_version }}
-          - kubectl={{ k8s_version }}
-        state: present
-      become: true
-      tags:
-        - kubernetes
+  - name: Disable swap
+    command: swapoff -a
+    when: ansible_swaptotal_mb > 0
 
-    - name: Enable kubelet service
-      systemd:
-        name: kubelet
-        enabled: yes
-        state: started
-      become: true
-      tags:
-        - kubernetes
+  - name: Initialize Kubernetes cluster
+    command: kubeadm init --pod-network-cidr=10.244.0.0/16
+    register: join_command
+    when: inventory_hostname == groups['kubernetes-master'][0]
 
-    - name: Initialize Kubernetes master
-      command: kubeadm init --pod-network-cidr {{ pod_cidr }}
-      become: true
-      when: "'kubernetes-master' in group_names"
-      register: kubeadm_output
+  - name: Copy Kubernetes configuration
+    command: mkdir -p $HOME/.kube && cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    args:
+      creates: $HOME/.kube/config
+    when: inventory_hostname == groups['kubernetes-master'][0]
 
-    - name: Copy Kubernetes admin.conf file to user directory
-      copy:
-        src: /etc/kubernetes/admin.conf
-        dest: /home/{{ ansible_user_id }}/.kube/config
-        owner: "{{ ansible_user_id }}"
-        group: "{{ ansible_user_id }}"
-        mode: "0600"
-      become: true
-      when: "'kubernetes-master' in group_names"
+  - name: Install flannel network
+    command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    when: inventory_hostname == groups['kubernetes-master'][0]
 
-    - name: Install Calico pod network
-      command: kubectl apply -f https://docs.projectcalico.org/v3.20/manifests/calico.yaml
-      become: true
-      when: "'kubernetes-master' in group_names"
-
-    - name: Join worker nodes to Kubernetes cluster
-      command: "{{ hostvars['kubernetes-master'].kubeadm_output.stdout_lines[-1] }} --v=5"
-      become: true
-      when: "'kubernetes-worker' in group_names"
+  - name: Join Kubernetes cluster
+    command: "{{ join_command.stdout_lines[0] }}"
+    when: inventory_hostname in groups['kubernetes-node']
