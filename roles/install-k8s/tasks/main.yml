@@ -103,3 +103,10 @@
        become: yes
        become_method: sudo
        become_user: root
+     
+     
+    - name: Add user to group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes   
