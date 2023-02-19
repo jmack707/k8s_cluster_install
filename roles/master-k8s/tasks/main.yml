@@ -13,9 +13,9 @@
       become: true
       delegate_to: master
 
-    - name: create .labuser directory
+    - name: create ."{{ ansible_user }}" directory
       become: true
-      become_user: labuser
+      become_user: "{{ ansible_user }}"
       file:
         path: $HOME/.kube
         state: directory
@@ -27,18 +27,18 @@
         src: /etc/kubernetes/admin.conf
         dest: /home/labuser/.kube/config
         remote_src: yes
-        owner: labuser
+        owner: "{{ ansible_user }}"
 
     - name: install Pod network
       become: true
-      become_user: labuser
+      become_user: "{{ ansible_user }}"
       shell: kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube-flannel.yml
       args:
         chdir: $HOME
         
     - name: Get the token for joining the worker nodes
       become: true
-      become_user: labuser
+      become_user: "{{ ansible_user }}"
       shell: kubeadm token create  --print-join-command
       register: kubernetes_join_command
 
@@ -51,15 +51,15 @@
         dest: "/tmp/kubernetes_join_command.sh"
         mode: "0777"
       become: true
-      become_user: labuser
+      become_user: "{{ ansible_user }}"
       delegate_to: "{{ item }}"
       loop: "{{ groups['workers'] }}"
 
     - name: Bash Completion and Shortcuts
       ansible.builtin.shell: "{{ item }}"
       with_items: 
-        - echo 'source <(kubectl completion bash)' >>/home/labuser/.bashrc
-        - echo 'alias k=kubectl' >>/home/labuser/.bashrc
-        - echo 'complete -o default -F __start_kubectl k' >>/home/labuser/.bashrc
+        - echo 'source <(kubectl completion bash)' >>/home/"{{ ansible_user }}"/.bashrc
+        - echo 'alias k=kubectl' >>/home/"{{ ansible_user }}"/.bashrc
+        - echo 'complete -o default -F __start_kubectl k' >>/home/"{{ ansible_user }}"/.bashrc
       args:
         executable: /bin/bash
