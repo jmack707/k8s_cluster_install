@@ -1,13 +1,13 @@
 ---
 # tasks file for users
 
-    - name: allow 'labuser' to use sudo without needing a password
+    - name: allow 'user" to use sudo without needing a password
       lineinfile:
         dest: /etc/sudoers
-        line: 'labuser ALL=(ALL) NOPASSWD: ALL'
+        line: '{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL'
         validate: 'visudo -cf %s'
       become: true
 
-    - name: set up authorized keys for the labuser user
-      authorized_key: user=labuser key={{lookup('ansible.builtin.file', 'files/id_ecdsa.pub') }}
+    - name: set up authorized keys for the "{{ ansible_user }}" user
+      authorized_key: user="{{ ansible_user }}" key={{lookup('ansible.builtin.file', 'files/id_ecdsa.pub') }}
       become: true      
