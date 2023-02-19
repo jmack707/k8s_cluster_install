@@ -51,7 +51,7 @@
         dest: "/tmp/kubernetes_join_command.sh"
         mode: "0777"
       become: true
-      become_user: {{ ansible_user }}
+      become_user: "{{ ansible_user }}"
       delegate_to: {{ item }}
       loop: "{{ groups['workers'] }}"
 
