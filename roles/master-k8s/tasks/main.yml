@@ -13,9 +13,9 @@
       become: true
       delegate_to: master
 
-    - name: create .{{ ansible_user }}" directory
+    - name: create ."{{ ansible_user }}" directory
       become: true
-      become_user: {{ ansible_user }}
+      become_user: "{{ ansible_user }}"
       file:
         path: $HOME/.kube
         state: directory
