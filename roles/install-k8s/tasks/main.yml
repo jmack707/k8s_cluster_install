@@ -54,8 +54,11 @@
 
      - name: install containerd
        shell: |
-               sudo apt-get update && sudo apt-get install -y containerd acl 
+               sudo apt-get update && sudo apt-get install -y containerd acl
                sudo mkdir -p /etc/containerd
+               sudo containerd config default > /etc/containerd/config.toml
+               sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/' /etc/containerd/config.toml
+               sudo sed -i 's/snapshotter = "overlayfs"/snapshotter = "native"/' /etc/containerd/config.toml
                sudo systemctl restart containerd
        become: yes
        become_method: sudo
