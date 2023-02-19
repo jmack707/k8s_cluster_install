@@ -52,7 +52,7 @@
         mode: "0777"
       become: true
       become_user: "{{ ansible_user }}"
-      delegate_to: {{ item }}
+      delegate_to: "{{ item }}"
       loop: "{{ groups['workers'] }}"
 
     - name: Bash Completion and Shortcuts
