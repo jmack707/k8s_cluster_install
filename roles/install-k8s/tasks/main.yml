@@ -105,8 +105,8 @@
        become_user: root
      
      
-    - name: Add user to group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes   
+     - name: Add user to group
+       user:
+         name: "{{ ansible_user }}"
+         groups: docker
+         append: yes   
