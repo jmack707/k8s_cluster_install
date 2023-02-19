@@ -25,7 +25,7 @@
       become: true
       copy:
         src: /etc/kubernetes/admin.conf
-        dest: /home/labuser/.kube/config
+        dest: /home/"{{ ansible_user }}"/.kube/config
         remote_src: yes
         owner: "{{ ansible_user }}"
 
