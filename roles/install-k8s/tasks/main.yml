@@ -109,4 +109,7 @@
        user:
          name: "{{ ansible_user }}"
          groups: docker
-         append: yes   
+         append: yes
+       become: yes
+       become_method: sudo
+       become_user: root     
