@@ -1,0 +1,61 @@
+---
+- hosts: kubernetes-nodes
+  become: true
+  vars:
+    kubernetes_version: "1.22.3-00"
+    cni_version: "v0.9.1"
+  tasks:
+    - name: Install containerd
+      apt:
+        name: [containerd]
+        state: present
+    - name: Configure containerd
+      copy:
+        src: "files/containerd.toml"
+        dest: "/etc/containerd/config.toml"
+      notify: restart containerd
+    - name: Install kubelet, kubeadm, kubectl
+      apt:
+        name: ["kubelet={{kubernetes_version}}", "kubeadm={{kubernetes_version}}", "kubectl={{kubernetes_version}}"]
+        state: present
+    - name: Configure kubelet
+      copy:
+        src: "files/20-kubelet.conf"
+        dest: "/etc/systemd/system/kubelet.service.d/20-kubelet.conf"
+      notify: restart kubelet
+    - name: Disable swap
+      command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+    - name: Initialize the control plane
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+      args:
+        chdir: /root
+        creates: /etc/kubernetes/admin.conf
+      register: join_command
+    - name: Copy kubectl config to user's home directory
+      copy:
+        src: "/etc/kubernetes/admin.conf"
+        dest: "~/.kube/config"
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: 0644
+      when: ansible_user != "root"
+    - name: Install flannel CNI plugin
+      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      when: "'control-plane' in join_command.stdout"
+    - name: Join worker nodes to the cluster
+      command: "{{ join_command.stdout_lines[-1] }} --ignore-preflight-errors=all"
+      when: "'control-plane' in join_command.stdout"
+      delegate_to: "{{ item }}"
+      with_items: "{{ play_hosts }}"
+      when: "'control-plane' not in item"
+  handlers:
+    - name: restart containerd
+      service:
+        name: containerd
+        state: restarted
+    - name: restart kubelet
+      service:
+        name: kubelet
+        state: restarted
