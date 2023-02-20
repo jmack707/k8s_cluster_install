@@ -18,7 +18,6 @@
       apt:
         name:
           - containerd
-          - containerd.io
         state: present
 
     - name: Install Kubernetes packages
