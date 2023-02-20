@@ -47,7 +47,7 @@
         state: absent
 
     - name: Disable swap (if configured).
-       command: swapoff -a
+      command: swapoff -a
 
     - name: Add CRI-O GPG key
       apt_key:
