@@ -1,63 +1,105 @@
 ---
-- name: Install Kubernetes on Ubuntu
+- name: Install Kubernetes with CRI-O
   hosts: all
   become: true
-
   vars:
-    kubernetes_version: "1.26.1-00"
-    
+    k8s_version: "1.22.2-00"
+    crio_version: "1.21.0"
   tasks:
-    # Install prerequisites
-    - name: Install apt-transport-https, curl and gnupg
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install packages required for Kubernetes and CRI-O
       apt:
         name: "{{ item }}"
         state: present
-      with_items:
+        update_cache: yes
+      loop:
         - apt-transport-https
+        - ca-certificates
         - curl
-        - gnupg
+        - software-properties-common
+        - gnupg-agent
 
-    - name: Turn off swap
-      sysctl:
-        name: vm.swappiness
-        value: 0
-        state: present
-
-    - name: Unmount swap
-      mount:
-        name: swap
-        fstype: swap
-        state: absent
-
-    - name: Disable swap on boot
-      lineinfile:
-        path: /etc/fstab
-        regexp: '^/dev/mapper/ubuntu--vg-swap_1'
-        state: absent
-
-    # Add Kubernetes signing key
-    - name: Add Kubernetes signing key
+    - name: Add Kubernetes GPG key
       apt_key:
         url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
         state: present
 
-    # Add Kubernetes repository
-    - name: Add Kubernetes repository
+    - name: Add Kubernetes apt repository
       apt_repository:
         repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
         state: present
+        filename: kubernetes.list
+        update_cache: yes
+        
+    - name: Add Kubernetes apt repository
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+        filename: kubernetes.list
+        update_cache: yes     
 
-    # Install Kubernetes components
+    - name: Ensure swap file doesn't exist (if configured).
+       file:
+        path: "{{ swap_file_path }}"
+        state: absent
+
+    - name: Disable swap (if configured).
+       command: swapoff -a
+
+    - name: Add CRI-O GPG key
+      apt_key:
+        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key
+        state: present
+
+    - name: Add CRI-O apt repository
+      apt_repository:
+        repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /
+        state: present
+        filename: cri-o.list
+        update_cache: yes
+
     - name: Install Kubernetes components
       apt:
         name: "{{ item }}"
         state: present
-      with_items:
-        - kubelet={{kubernetes_version}}
-        - kubeadm={{kubernetes_version}}
-        - kubectl={{kubernetes_version}}
+        update_cache: yes
+      loop:
+        - kubelet={{ k8s_version }}
+        - kubeadm={{ k8s_version }}
+        - kubectl={{ k8s_version }}
 
-    # Initialize Kubernetes cluster on the first node
-    - name: Initialize Kubernetes cluster on first node
-      command: kubeadm init --pod-network-cidr=192.168.0.0/16
-      when: inventory_hostname == groups['all'][0]
+    - name: Install CRI-O
+      apt:
+        name: cri-o={{ crio_version }}
+        state: present
+
+    - name: Enable and start CRI-O service
+      systemd:
+        name: crio
+        enabled: true
+        state: started
+
+    - name: Disable and stop kubelet service
+      systemd:
+        name: kubelet
+        enabled: false
+        state: stopped
+
+    - name: Configure CRI-O as Kubernetes runtime
+      lineinfile:
+        path: /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+        line: Environment="KUBELET_EXTRA_ARGS=--container-runtime=remote --container-runtime-endpoint=/var/run/crio/crio.sock"
+        state: present
+        create: true
+
+    - name: Reload systemd configuration
+      systemd:
+        daemon_reload: yes
+
+    - name: Restart kubelet service
+      systemd:
+        name: kubelet
+        state: started
