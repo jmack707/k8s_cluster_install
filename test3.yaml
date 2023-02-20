@@ -59,7 +59,6 @@
         filename: kubernetes
         update_cache: yes
         keyserver: keyserver.ubuntu.com
-        key_id: 6A030B21BA07F4FB
 
     - name: Install Kubernetes packages
       apt:
