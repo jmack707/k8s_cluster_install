@@ -17,17 +17,23 @@
         - curl
         - gnupg
 
-    - name: Set vm.swappiness to 0
+    - name: Turn off swap
       sysctl:
         name: vm.swappiness
         value: 0
         state: present
 
-    - name: Comment out swap partition in /etc/fstab
+    - name: Unmount swap
+      mount:
+        name: swap
+        fstype: swap
+        state: absent
+
+    - name: Disable swap on boot
       lineinfile:
         path: /etc/fstab
-        regexp: '^/dev/mapper/swap'
-        line: '#/dev/mapper/swap none swap sw 0 0'
+        regexp: '^/dev/mapper/ubuntu--vg-swap_1'
+        state: absent
 
     # Add Kubernetes signing key
     - name: Add Kubernetes signing key
