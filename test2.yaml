@@ -1,61 +1,82 @@
 ---
-- hosts: kubernetes-nodes
+- name: Install Kubernetes with Containerd on Ubuntu
+  hosts: all
   become: true
-  vars:
-    kubernetes_version: "1.22.3-00"
-    cni_version: "v0.9.1"
+
   tasks:
-    - name: Install containerd
+    # Install prerequisites
+    - name: Install apt-transport-https, curl and gnupg
       apt:
-        name: [containerd]
+        name: "{{ item }}"
         state: present
-    - name: Configure containerd
-      copy:
-        src: "files/containerd.toml"
-        dest: "/etc/containerd/config.toml"
-      notify: restart containerd
-    - name: Install kubelet, kubeadm, kubectl
+      with_items:
+        - apt-transport-https
+        - curl
+        - gnupg
+
+    # Add Kubernetes signing key
+    - name: Add Kubernetes signing key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    # Add Kubernetes repository
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+    # Install Kubernetes and Containerd
+    - name: Install Kubernetes and Containerd
       apt:
-        name: ["kubelet={{kubernetes_version}}", "kubeadm={{kubernetes_version}}", "kubectl={{kubernetes_version}}"]
+        name: "{{ item }}"
         state: present
-    - name: Configure kubelet
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - containerd.io
+
+    # Configure Containerd
+    - name: Configure Containerd
       copy:
-        src: "files/20-kubelet.conf"
-        dest: "/etc/systemd/system/kubelet.service.d/20-kubelet.conf"
-      notify: restart kubelet
-    - name: Disable swap
-      command: swapoff -a
-      when: ansible_swaptotal_mb > 0
-    - name: Initialize the control plane
-      command: kubeadm init --pod-network-cidr=10.244.0.0/16
-      args:
-        chdir: /root
-        creates: /etc/kubernetes/admin.conf
-      register: join_command
-    - name: Copy kubectl config to user's home directory
+        dest: /etc/containerd/config.toml
+        content: |
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+            runtime_type = "io.containerd.runc.v1"
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.crio]
+            runtime_type = "io.containerd.crio.v1"
+
+    # Initialize Kubernetes cluster on the first node
+    - name: Initialize Kubernetes cluster on first node
+      command: kubeadm init --pod-network-cidr=192.168.0.0/16
+      when: inventory_hostname == groups['all'][0]
+
+    # Configure kubectl for non-root user
+    - name: Configure kubectl for non-root user
+      become: false
       copy:
-        src: "/etc/kubernetes/admin.conf"
-        dest: "~/.kube/config"
-        remote_src: yes
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: 0644
-      when: ansible_user != "root"
-    - name: Install flannel CNI plugin
-      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-      when: "'control-plane' in join_command.stdout"
+        src: /etc/kubernetes/admin.conf
+        dest: /home/{{ ansible_user }}/admin.conf
+        remote_src: true
+      when: inventory_hostname == groups['all'][0]
+    - name: Set kubectl context for non-root user
+      become: false
+      command: kubectl config use-context default --kubeconfig=/home/{{ ansible_user }}/admin.conf
+      when: inventory_hostname == groups['all'][0]
+    - name: Copy kubectl config to root user
+      become: true
+      copy:
+        src: /home/{{ ansible_user }}/admin.conf
+        dest: /root/admin.conf
+      when: inventory_hostname == groups['all'][0]
+
+    # Join worker nodes to the cluster
     - name: Join worker nodes to the cluster
-      command: "{{ join_command.stdout_lines[-1] }} --ignore-preflight-errors=all"
-      when: "'control-plane' in join_command.stdout"
-      delegate_to: "{{ item }}"
-      with_items: "{{ play_hosts }}"
-      when: "'control-plane' not in item"
-  handlers:
-    - name: restart containerd
-      service:
-        name: containerd
-        state: restarted
-    - name: restart kubelet
-      service:
-        name: kubelet
-        state: restarted
+      command: "{{ hostvars[groups['all'][0]]['stdout_lines'][0] }}"
+      when: inventory_hostname != groups['all'][0] and "'kubeadm join' in hostvars[groups['all'][0]]['stdout_lines'][0]"
+
+    # Install Calico network plugin
+    - name: Install Calico network plugin
+      command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+      when: inventory_hostname == groups['all'][0]
