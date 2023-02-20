@@ -2,6 +2,10 @@
   hosts: all
   become: yes
 
+  vars:
+    # Change the Kubernetes version to match your needs
+    OS: xUbuntu_20.04
+
   tasks:
     - name: Disable swap
       sysctl:
