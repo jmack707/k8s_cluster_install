@@ -49,17 +49,18 @@
       become_method: sudo
       become_user: root
 
-    - name: Add CRI-O GPG key
-      apt_key:
-        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/Release.key
-        state: present
-
     - name: Add CRI-O repository
       apt_repository:
         repo: 'deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_{{ ansible_distribution_release }}/ /'
         keyserver: hkp://keyserver.ubuntu.com:80
         state: present
-    
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Install CRI-O package
+      apt:
+        name: cri-o
+        state: present
+      when: ansible_distribution == "Ubuntu"
     
     - name: Install Kubernetes components
       apt:
