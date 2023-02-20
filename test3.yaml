@@ -19,6 +19,18 @@
         name:
           - containerd
         state: present
+       
+    # Add Kubernetes signing key
+    - name: Add Kubernetes signing key
+      apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    # Add Kubernetes repository
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present       
 
     - name: Install Kubernetes packages
       apt:
