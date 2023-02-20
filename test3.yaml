@@ -31,22 +31,33 @@
         - ca-certificates
         - curl
 
-    - name: Add CRI-O repository
+    - name: Get Cri-o apt-key
+      apt_key: 
+        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ OS }}/Release.key
+        state: present
+
+    - name: Get Cri-o apt-key
+      apt_key: 
+        url: https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:{{ VERSION }}/{{ OS}}/Release.key
+        state: present
+
+
+    - name: Add Cri-o stable repo
       apt_repository:
-        repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_20.04/ /
+        repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ OS }}/ /"
         state: present
-        filename: cri-o
+        filename: cri-o-stable
 
-    - name: Install CRI-O
+    - name: Add Cri-o stable repo
+      apt_repository:
+        repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ VERSION }}/{{ OS }}/ /"
+        state: present
+        filename: cri-o-{{ VERSION }}
+
+    - name: update apt
       apt:
-        name: cri-o
-        state: present
-
-    - name: Enable and start CRI-O service
-      systemd:
-        name: crio
-        enabled: yes
-        state: started
+        update_cache: yes
+        cache_valid_time: 3600
 
     - name: Set up Kubernetes repository
       apt_repository:
