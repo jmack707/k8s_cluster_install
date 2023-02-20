@@ -5,6 +5,7 @@
   vars:
     # Change the Kubernetes version to match your needs
     OS: xUbuntu_20.04
+    VERSION: 1.26
 
   tasks:
     - name: Disable swap
