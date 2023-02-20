@@ -3,7 +3,7 @@
   hosts: all
   become: true
   vars:
-    k8s_version: "1.22.2-00"
+    k8s_version: "1.26.1-00"
     crio_version: "1.21.0"
   tasks:
     - name: Update apt cache
