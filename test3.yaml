@@ -6,7 +6,7 @@
     # Change the Kubernetes version to match your needs
     kubernetes_version: 1.22.2-00
     cni_plugin: flannel
-    master_ip: 10.0.0.1
+    master_ip: 10.1.20.10
 
   tasks:
     - name: Install Docker
@@ -28,6 +28,11 @@
           - kubeadm={{ kubernetes_version }}
           - kubectl={{ kubernetes_version }}
         state: present
+        
+    - name: Create /etc/containerd folder
+      file:
+        path: /etc/containerd
+        state: directory        
 
     - name: Configure Containerd
       copy:
