@@ -10,7 +10,7 @@
 
   tasks:
 
-    - name: "modprobe overlay"
+    - name: modprobe overlay
       modprobe:
         name: overlay
         state: present
