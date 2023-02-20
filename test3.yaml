@@ -4,7 +4,7 @@
   become: true
   vars:
     # Change the Kubernetes version to match your needs
-    kubernetes_version: 1.22.2-00
+    kubernetes_version: 1.25.1-00
     cni_plugin: flannel
     master_ip: 10.1.20.10
 
