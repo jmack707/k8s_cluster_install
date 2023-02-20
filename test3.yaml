@@ -1,25 +1,19 @@
 ---
-- name: Deploy Kubernetes cluster
+- name: Install Kubernetes on Ubuntu
   hosts: all
   become: true
-  vars:
-    # Change the Kubernetes version to match your needs
-    kubernetes_version: 1.25.1-00
-    cni_plugin: flannel
-    master_ip: 10.1.20.10
 
   tasks:
-    - name: Install Docker
+    # Install prerequisites
+    - name: Install apt-transport-https, curl and gnupg
       apt:
-        name: docker.io
+        name: "{{ item }}"
         state: present
+      with_items:
+        - apt-transport-https
+        - curl
+        - gnupg
 
-    - name: Install Containerd
-      apt:
-        name:
-          - containerd
-        state: present
-       
     # Add Kubernetes signing key
     - name: Add Kubernetes signing key
       apt_key:
@@ -30,59 +24,19 @@
     - name: Add Kubernetes repository
       apt_repository:
         repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-        state: present       
-
-    - name: Install Kubernetes packages
-      apt:
-        name:
-          - kubelet={{ kubernetes_version }}
-          - kubeadm={{ kubernetes_version }}
-          - kubectl={{ kubernetes_version }}
         state: present
-        
-    - name: Create /etc/containerd folder
-      file:
-        path: /etc/containerd
-        state: directory        
 
-    - name: Configure Containerd
-      copy:
-        src: files/containerd-config.toml
-        dest: /etc/containerd/config.toml
-        owner: root
-        group: root
-        mode: "0644"
-      notify:
-        - restart containerd
+    # Install Kubernetes components
+    - name: Install Kubernetes components
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
 
-    - name: Configure Kubernetes
-      command: kubeadm init --apiserver-advertise-address={{ master_ip }} --pod-network-cidr=10.244.0.0/16 --kubernetes-version={{ kubernetes_version }} --ignore-preflight-errors=NumCPU
-      when: inventory_hostname == groups['masters'][0]
-      register: join_command
-
-    - name: Copy Kubernetes config to current user's home directory
-      copy:
-        src: /etc/kubernetes/admin.conf
-        dest: /home/{{ ansible_user }}/.kube/config
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-
-    - name: Deploy CNI plugin
-      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-
-    - name: Allow scheduling pods on the master node
-      command: kubectl taint nodes --all node-role.kubernetes.io/master-
-
-    - name: Save join command to file
-      copy:
-        content: "{{ join_command.stdout_lines[1] }}"
-        dest: /home/{{ ansible_user }}/join.sh
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: "0755"
-
-  handlers:
-    - name: restart containerd
-      systemd:
-        name: containerd
-        state: restarted
+    # Initialize Kubernetes cluster on the first node
+    - name: Initialize Kubernetes cluster on first node
+      command: kubeadm init --pod-network-cidr=192.168.0.0/16
+      when: inventory_hostname == groups['all'][0]
