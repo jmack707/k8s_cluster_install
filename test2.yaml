@@ -14,12 +14,10 @@
         - curl
         - gnupg
 
-    - name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
-      replace:
-        path: /etc/fstab
-        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
-        replace: '# \1'
-
+     - name: disable swap
+       shell: |
+               sudo swapoff -a
+               sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
     # Add Kubernetes signing key
     - name: Add Kubernetes signing key
