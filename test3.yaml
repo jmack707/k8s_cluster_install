@@ -14,6 +14,18 @@
         - curl
         - gnupg
 
+    - name: Set vm.swappiness to 0
+      sysctl:
+        name: vm.swappiness
+        value: 0
+        state: present
+
+    - name: Comment out swap partition in /etc/fstab
+      lineinfile:
+        path: /etc/fstab
+        regexp: '^/dev/mapper/swap'
+        line: '#/dev/mapper/swap none swap sw 0 0'
+
     # Add Kubernetes signing key
     - name: Add Kubernetes signing key
       apt_key:
