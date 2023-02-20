@@ -31,10 +31,6 @@
         - ca-certificates
         - curl
 
-    - name: Add CRI-O repository key
-      apt_key:
-        url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Ubuntu_20.04/Release.key
-
     - name: Add CRI-O repository
       apt_repository:
         repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/Ubuntu_20.04/ /
