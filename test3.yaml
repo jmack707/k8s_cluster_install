@@ -3,6 +3,9 @@
   become: yes
   become_user: root
   gather_facts: yes
+  
+  vars:
+    VERSION: 1.26
 
   tasks:
      - name: Create CRI-O config file
