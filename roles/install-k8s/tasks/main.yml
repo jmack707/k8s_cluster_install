@@ -54,7 +54,7 @@
 
      - name: install containerd
        shell: |
-               sudo apt-get update && sudo apt-get install -y containerd=1.6.2 acl
+               sudo apt-get update && sudo apt-get install -y containerd acl
                sudo mkdir -p /etc/containerd
                sudo containerd config default > /etc/containerd/config.toml
                sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/' /etc/containerd/config.toml
